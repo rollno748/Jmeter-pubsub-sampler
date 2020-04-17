@@ -92,7 +92,7 @@ public class SubscriberSampler extends SubscriberTestElement implements Sampler,
 				result.setResponseData(createDeCompressedMessage(reader.getData().toByteArray()),
 						StandardCharsets.UTF_8.name());
 			} else {
-				result.setResponseData(reader.getData().toString(), StandardCharsets.UTF_8.name());
+				result.setResponseData(reader.getData().toStringUtf8(), StandardCharsets.UTF_8.name());
 			}
 			result.setResponseHeaders("PublishedMessageID: " + reader.getMessageId() + "\npublish_time in "+reader.getPublishTime());
 			result.setSuccessful(true);
