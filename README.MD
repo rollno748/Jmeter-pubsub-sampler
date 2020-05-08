@@ -22,7 +22,7 @@ This plugin adds feature to connect to a topic to publish/subscribe messages in 
 
 ## Installation Instructions
 
-* Download the source code from the Gitlab.
+* Download the source code from the Github.
 * Just do a mvn clean install (Git bash is required)
 * Jar will be generated under the target directory (jmeter-pubsub-sampler-1.0.jar)
 * Copy the Jar to \<Jmeter Installed Directory\>/lib/ext/

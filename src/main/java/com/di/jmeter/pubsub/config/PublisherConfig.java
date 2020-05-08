@@ -20,11 +20,12 @@ package com.di.jmeter.pubsub.config;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 
 import org.apache.jmeter.config.ConfigElement;
+import org.apache.jmeter.config.ConfigTestElement;
 import org.apache.jmeter.testbeans.TestBean;
 import org.apache.jmeter.testbeans.TestBeanHelper;
-import org.apache.jmeter.testelement.AbstractTestElement;
 import org.apache.jmeter.testelement.TestStateListener;
 import org.apache.jmeter.threads.JMeterContextService;
 import org.apache.jmeter.threads.JMeterVariables;
@@ -38,13 +39,13 @@ import com.google.cloud.pubsub.v1.Publisher;
 import com.google.gson.JsonObject;
 import com.google.pubsub.v1.ProjectTopicName;
 
-public class PublisherConfig extends AbstractTestElement implements ConfigElement, TestStateListener, TestBean {
+public class PublisherConfig extends ConfigTestElement implements Serializable, ConfigElement, TestStateListener, TestBean {
 
 	private static Logger LOGGER = LoggerFactory.getLogger(PublisherConfig.class);
 	private static final long serialVersionUID = 7645049205276507368L;
 
 	private Publisher publisherClient;
-	private JsonObject credentials = new JsonObject();
+	private transient JsonObject credentials = new JsonObject();
 	private static GoogleCredentials gcpCredentials = null;
 
 	private String type;

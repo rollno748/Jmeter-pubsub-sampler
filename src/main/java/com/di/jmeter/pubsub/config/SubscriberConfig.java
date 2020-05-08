@@ -21,11 +21,12 @@ package com.di.jmeter.pubsub.config;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 
 import org.apache.jmeter.config.ConfigElement;
+import org.apache.jmeter.config.ConfigTestElement;
 import org.apache.jmeter.testbeans.TestBean;
 import org.apache.jmeter.testbeans.TestBeanHelper;
-import org.apache.jmeter.testelement.AbstractTestElement;
 import org.apache.jmeter.testelement.TestStateListener;
 import org.apache.jmeter.threads.JMeterContextService;
 import org.apache.jmeter.threads.JMeterVariables;
@@ -43,12 +44,12 @@ import com.google.cloud.pubsub.v1.Subscriber;
 import com.google.gson.JsonObject;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 
-public class SubscriberConfig extends AbstractTestElement implements ConfigElement, TestStateListener, TestBean {
+public class SubscriberConfig extends ConfigTestElement implements ConfigElement, TestStateListener, TestBean, Serializable {
 
 	private static final long serialVersionUID = -6527581818773236163L;
 	private static Logger LOGGER = LoggerFactory.getLogger(SubscriberConfig.class);
 	private Subscriber subscriber;
-	private JsonObject credentials = new JsonObject();
+	private transient JsonObject credentials = new JsonObject();
 	private static GoogleCredentials gcpCredentials = null;
 
 	private String type;
