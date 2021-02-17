@@ -17,22 +17,21 @@
  */
 package com.di.jmeter.pubsub.sampler;
 
-import java.io.Serializable;
-
 import org.apache.jmeter.gui.Searchable;
 import org.apache.jmeter.testelement.AbstractTestElement;
 import org.apache.jmeter.testelement.TestElement;
 import org.apache.jmeter.testelement.TestStateListener;
 
-public abstract class PublisherTestElement extends AbstractTestElement implements TestStateListener, TestElement, Serializable, Searchable {
+import java.io.Serializable;
 
+public abstract class PublisherTestElement extends AbstractTestElement implements TestStateListener, TestElement, Serializable, Searchable {
 
 	private static final long serialVersionUID = 7027549399338665744L;
 	
-	private boolean gzipCompression;
-	private String message;
-	
-	
+	private boolean gzipCompression = false;
+	private String message = "";
+	private String attributes = "";
+
 	public String getMessage() {
 		return message;
 	}
@@ -49,5 +48,12 @@ public abstract class PublisherTestElement extends AbstractTestElement implement
 		this.gzipCompression = gzipCompression;
 	}
 
+	public String getAttributes() {
+		return attributes;
+	}
+
+	public void setAttributes(String attributes) {
+		this.attributes = attributes;
+	}
 
 }
