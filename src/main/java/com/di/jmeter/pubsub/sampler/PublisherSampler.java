@@ -18,14 +18,15 @@
 
 package com.di.jmeter.pubsub.sampler;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.ExecutionException;
-import java.util.zip.GZIPOutputStream;
+import com.google.api.core.ApiFuture;
+import com.google.cloud.pubsub.v1.Publisher;
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
+import com.google.protobuf.ByteString;
+import com.google.pubsub.v1.PubsubMessage;
+
+import com.di.jmeter.pubsub.config.PublisherConfig;
 
 import org.apache.jmeter.config.ConfigTestElement;
 import org.apache.jmeter.engine.util.ConfigMergabilityIndicator;
@@ -37,16 +38,25 @@ import org.apache.jmeter.testelement.TestElement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.di.jmeter.pubsub.config.PublisherConfig;
-import com.google.api.core.ApiFuture;
-import com.google.cloud.pubsub.v1.Publisher;
-import com.google.protobuf.ByteString;
-import com.google.pubsub.v1.PubsubMessage;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.zip.GZIPOutputStream;
 
 public class PublisherSampler extends PublisherTestElement implements Sampler, TestBean, ConfigMergabilityIndicator {
 
 	private static final long serialVersionUID = -2509242423429019193L;
 	private static final Logger LOGGER = LoggerFactory.getLogger(PublisherSampler.class);
+	private static final Gson gson = new Gson();
+	private static final Type TYPED_MAP = new TypeToken<Map<String, String>>() {}.getType();
 
 	private Publisher publisher = null;
 	private static final Set<String> APPLIABLE_CONFIG_CLASSES = new HashSet<>(
@@ -62,10 +72,12 @@ public class PublisherSampler extends PublisherTestElement implements Sampler, T
 		result.setContentType("text/plain");
 		result.setDataEncoding(StandardCharsets.UTF_8.name());
 
+		Map<String, String> attributes = convertStringToAttributesMap(getAttributes());
+
 		if (isGzipCompression()) {
-			template = createPubsubMessage(createEventCompressed(getMessage()));
+			template = createPubsubMessage(createEventCompressed(getMessage()), attributes);
 		} else {
-			template = convertStringToPubSubMessage(getMessage());
+			template = convertStringToPubSubMessage(getMessage(), attributes);
 		}
 
 		result.sampleStart();
@@ -81,9 +93,25 @@ public class PublisherSampler extends PublisherTestElement implements Sampler, T
 		return result;
 	}
 
+	private Map<String,String> convertStringToAttributesMap(String attributesAsString){
+			return Optional.ofNullable(attributesAsString)
+
+					.map(str -> {
+						Map<String, String> result = null;
+						try {
+							result = gson.fromJson(str, TYPED_MAP);
+						} catch (JsonSyntaxException sse) {
+							LOGGER.error("Failed to convert string attributes: {} to Map<String,String>", attributesAsString, sse);
+						}
+						return result;
+					})
+
+					.orElse(Collections.emptyMap());
+	}
+
 	// Returns Modified templates/Message as template for publishing
-	private PubsubMessage convertStringToPubSubMessage(String message) {
-		return PubsubMessage.newBuilder().setData(ByteString.copyFromUtf8(message)).build();
+	private PubsubMessage convertStringToPubSubMessage(String message, Map<String, String> attributes) {
+		return PubsubMessage.newBuilder().setData(ByteString.copyFromUtf8(message)).putAllAttributes(attributes).build();
 	}
 
 	private byte[] createEventCompressed(String message) {
@@ -124,8 +152,8 @@ public class PublisherSampler extends PublisherTestElement implements Sampler, T
 		return resp;
 	}
 
-	public static PubsubMessage createPubsubMessage(byte[] msg) {
-		return PubsubMessage.newBuilder().setData(ByteString.copyFrom(msg)).build();
+	public static PubsubMessage createPubsubMessage(byte[] msg, Map<String,String> attributes) {
+		return PubsubMessage.newBuilder().setData(ByteString.copyFrom(msg)).putAllAttributes(attributes).build();
 	}
 
 	private String request() {
