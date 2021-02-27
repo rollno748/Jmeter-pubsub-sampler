@@ -33,6 +33,8 @@ public class PublisherConfigBeanInfo extends BeanInfoSupport {
 	public PublisherConfigBeanInfo() {
 		super(PublisherConfig.class);
 		
+		createPropertyGroup("pubConfig", new String[] { "publisherConnection" });
+		
 		createPropertyGroup("credentials", new String[] { "type", "projectId", "topic", "privateKey", "privateKeyId", "tokenUri",  
 				"clientId", "clientEmail", "client_x509CertUrl", "authUri", "authProvider_x509CertUrl" });
 
@@ -79,6 +81,10 @@ public class PublisherConfigBeanInfo extends BeanInfoSupport {
 		propertyDescriptor =  property("authProvider_x509CertUrl");
 		propertyDescriptor.setValue(NOT_UNDEFINED, Boolean.TRUE);
 		propertyDescriptor.setValue(DEFAULT, "https://www.googleapis.com/oauth2/v1/certs");
+		
+		propertyDescriptor =  property("publisherConnection");
+		propertyDescriptor.setValue(NOT_UNDEFINED, Boolean.TRUE);
+		propertyDescriptor.setValue(DEFAULT, "<PUBLISHER CONFIG OBJECT>");
 		
 
 		if (LOGGER.isDebugEnabled()) {

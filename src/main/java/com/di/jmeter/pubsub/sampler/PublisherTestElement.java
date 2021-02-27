@@ -15,30 +15,42 @@
  * limitations under the License.
  *
  */
+
 package com.di.jmeter.pubsub.sampler;
+
+import java.io.Serializable;
 
 import org.apache.jmeter.gui.Searchable;
 import org.apache.jmeter.testelement.AbstractTestElement;
 import org.apache.jmeter.testelement.TestElement;
 import org.apache.jmeter.testelement.TestStateListener;
 
-import java.io.Serializable;
-
 public abstract class PublisherTestElement extends AbstractTestElement implements TestStateListener, TestElement, Serializable, Searchable {
+
 
 	private static final long serialVersionUID = 7027549399338665744L;
 	
-	private boolean gzipCompression = false;
-	private String message = "";
-	private String attributes = "";
-
+	private boolean gzipCompression;
+	private String message;
+	private String publisherClientObject;
+	private String attributes;
+	
 	public String getMessage() {
 		return message;
+	}
+
+	public String getAttributes() {
+		return attributes;
+	}
+	
+	public void setAttributes(String attributes) {
+		this.attributes = attributes;
 	}
 
 	public void setMessage(String message) {
 		this.message = message;
 	}
+	
 
 	public boolean isGzipCompression() {
 		return gzipCompression;
@@ -48,12 +60,14 @@ public abstract class PublisherTestElement extends AbstractTestElement implement
 		this.gzipCompression = gzipCompression;
 	}
 
-	public String getAttributes() {
-		return attributes;
+	public String getPublisherClientObject() {
+		return publisherClientObject;
 	}
 
-	public void setAttributes(String attributes) {
-		this.attributes = attributes;
+	public void setPublisherClientObject(String publisherClientObject) {
+		this.publisherClientObject = publisherClientObject;
 	}
+
+
 
 }

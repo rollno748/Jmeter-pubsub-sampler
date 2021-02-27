@@ -15,6 +15,7 @@
  * limitations under the License.
  *
  */
+
 package com.di.jmeter.pubsub.sampler;
 
 public class SubscriberSamplerBeanInfo extends SubscriberTestElementBeanInfoSupport{

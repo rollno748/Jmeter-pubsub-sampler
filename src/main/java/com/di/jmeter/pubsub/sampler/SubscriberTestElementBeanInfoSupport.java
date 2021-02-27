@@ -15,6 +15,7 @@
  * limitations under the License.
  *
  */
+
 package com.di.jmeter.pubsub.sampler;
 
 import java.beans.PropertyDescriptor;
@@ -27,7 +28,7 @@ public class SubscriberTestElementBeanInfoSupport extends BeanInfoSupport {
 	protected SubscriberTestElementBeanInfoSupport(Class<? extends TestBean> beanClass) {
 		super(beanClass);
 
-		createPropertyGroup("SubscriberProperties", new String[] { "ackDelay", "decompression"});
+		createPropertyGroup("Subscriber Properties", new String[] { "subscriberObject", "ackDelay", "decompression"});
 		 
         PropertyDescriptor propertyDescriptor =  property("ackDelay");
         propertyDescriptor.setValue(NOT_UNDEFINED, Boolean.TRUE);
@@ -36,6 +37,12 @@ public class SubscriberTestElementBeanInfoSupport extends BeanInfoSupport {
         propertyDescriptor =  property("decompression");
         propertyDescriptor.setValue(NOT_UNDEFINED, Boolean.TRUE);
         propertyDescriptor.setValue(DEFAULT, Boolean.FALSE);
+        
+        propertyDescriptor =  property("subscriberObject");
+        propertyDescriptor.setValue(NOT_UNDEFINED, Boolean.TRUE);
+        propertyDescriptor.setValue(DEFAULT, "");
+        
+        
         
 	}
 

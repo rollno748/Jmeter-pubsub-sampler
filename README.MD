@@ -2,30 +2,30 @@
 
 ## Introduction
 
-This plugin adds feature to connect to a topic to publish/subscribe messages in GCP
+This plugin adds feature to connect to GCP to publish/subscribe messages to the topic
 
 ## Required Components
 
-1. Jmeter
+1. Apache Jmeter/DI-Jmeter
 2. GCP Pubsub configs
 
 
 ## Jar Dependencies Required
 
-* google-cloud-pubsub-1.88.0.jar or above
+* google-cloud-pubsub-1.111.2.jar
 * gson-2.2.4.jar
 
 ## Jmeter Target
 
-* Jmeter version 5.1.1 or above
+* Jmeter version 5.3 or above
 * Java 8 or above
 
 ## Installation Instructions
 
-* Download the source code from the Github.
+* Download the source code from the Gitlab.
 * Just do a mvn clean install (Git bash is required)
-* Jar will be generated under the target directory (jmeter-pubsub-sampler-1.0.jar)
-* Copy the Jar to \<Jmeter Installed Directory\>/lib/ext/
+* Jar will be generated under the target directory (jmeter-pubsub-sampler-1.1.jar).
+* Copy the Jar to \<Jmeter Installed Directory\>/lib/ext/ for DI Jmeter \<Jmeter Installed Directory\>/di/plugins
 
 ## How to use it
 Add required config element (Publisher config/ Subscriber config)
@@ -37,7 +37,9 @@ Add required config element (Publisher config/ Subscriber config)
 # Publisher Info
 Apart from config element, Publisher sampler has Gzip compression feature
 * The Flag in the sampler will allow the mechanism to publish the message with/without Gzip compression 
-* On successfull publish of each message, GCP returns a unique Id which will be returned in response header.
+* On successful publish of each message, GCP returns a unique Id which will be returned in response header.
+* Supports attributes for messages being published
+* Supports multiple topic publishing feature in the same test plan
 
 # Subscriber Info
 The subscriber works perfectly. The current mechanism of Subscriber is 
@@ -49,6 +51,13 @@ The subscriber works perfectly. The current mechanism of Subscriber is
 * each message retrieved from the subscriber will have the message ID and publish time info along with the message.
 * The message ID and publish time info will be returned in response headers and message on response body
 * The subscriber sampler supports De-Compression, If the message is in gzip compressed format.
+* Supports multiple topic subscription feature in the same test plan
+
+## Changes 
+* Upgraded pub-sub client version to 1.111.2
+* Supports Attributes for sending messages 
+* Supports multi-topic publishing, subscribing on same test plan 
+
 
 
 ## References
@@ -58,3 +67,7 @@ Below are the references which guided to build this plugin.
 * https://cloud.google.com/pubsub/docs/quickstart-client-libraries
 * https://cloud.google.com/pubsub/docs/publisher
 * https://cloud.google.com/pubsub/docs/pull
+
+Please rate a :star2: if you like it. 
+Please open up :bug: - If you experienced something.
+ 

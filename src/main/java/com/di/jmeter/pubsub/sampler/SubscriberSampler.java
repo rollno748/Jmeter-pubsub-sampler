@@ -15,6 +15,7 @@
  * limitations under the License.
  *
  */
+
 package com.di.jmeter.pubsub.sampler;
 
 import java.io.BufferedReader;
@@ -24,6 +25,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.zip.GZIPInputStream;
 
@@ -52,6 +54,9 @@ public class SubscriberSampler extends SubscriberTestElement implements Sampler,
 	private static PubsubMessage reader;
 	private String ackDelay;
 	private boolean decompression;
+	private String subscriberObject;
+	
+	private Map<String, MessagesQueue> pubsubQueue;
 
 	@Override
 	public SampleResult sample(Entry e) {
@@ -81,18 +86,20 @@ public class SubscriberSampler extends SubscriberTestElement implements Sampler,
 	}
 
 	private PubsubMessage readMessageFromTopic(SampleResult result) throws IOException {
-
-		if (messagesQueue == null) {
-			this.messagesQueue = SubscriberConfig.getMessagesQueue();
+		if(messagesQueue == null) {
+			if(pubsubQueue == null ) {
+				this.pubsubQueue = SubscriberConfig.getPubsubQueue();
+			}
+			this.messagesQueue = pubsubQueue.get(getSubscriberObject());
 		}
 
 		try {
 			reader = messagesQueue.take();
 			if (isDecompression()) {
-				result.setResponseData(createDeCompressedMessage(reader.getData().toByteArray()),
+				result.setResponseData(createDeCompressedMessage(reader.toByteArray()),
 						StandardCharsets.UTF_8.name());
 			} else {
-				result.setResponseData(reader.getData().toStringUtf8(), StandardCharsets.UTF_8.name());
+				result.setResponseData(reader.toString(), StandardCharsets.UTF_8.name());
 			}
 			result.setResponseHeaders("PublishedMessageID: " + reader.getMessageId() + "\npublish_time in "+reader.getPublishTime());
 			result.setSuccessful(true);
@@ -175,4 +182,12 @@ public class SubscriberSampler extends SubscriberTestElement implements Sampler,
 		this.decompression = decompression;
 	}
 
+	public String getSubscriberObject() {
+		return subscriberObject;
+	}
+
+	public void setSubscriberObject(String subscriberObject) {
+		this.subscriberObject = subscriberObject;
+	}
+	
 }

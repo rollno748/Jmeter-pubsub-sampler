@@ -15,19 +15,20 @@
  * limitations under the License.
  *
  */
+
 package com.di.jmeter.pubsub.config;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.jmeter.config.ConfigElement;
 import org.apache.jmeter.config.ConfigTestElement;
 import org.apache.jmeter.testbeans.TestBean;
 import org.apache.jmeter.testbeans.TestBeanHelper;
 import org.apache.jmeter.testelement.TestStateListener;
-import org.apache.jmeter.threads.JMeterContextService;
 import org.apache.jmeter.threads.JMeterVariables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,7 +40,12 @@ import com.google.cloud.pubsub.v1.Publisher;
 import com.google.gson.JsonObject;
 import com.google.pubsub.v1.ProjectTopicName;
 
-public class PublisherConfig extends ConfigTestElement implements Serializable, ConfigElement, TestStateListener, TestBean {
+/**
+ * @author Mohamed Ibrahim
+ *
+ */
+public class PublisherConfig extends ConfigTestElement
+		implements ConfigElement, TestStateListener, TestBean, Serializable {
 
 	private static Logger LOGGER = LoggerFactory.getLogger(PublisherConfig.class);
 	private static final long serialVersionUID = 7645049205276507368L;
@@ -60,7 +66,7 @@ public class PublisherConfig extends ConfigTestElement implements Serializable, 
 	private String authProvider_x509CertUrl;
 	private String client_x509CertUrl;
 
-	private static final String PUBSUB_CONNECTION = "publisherConnection";
+	private String publisherConnection;
 
 	// Default Constructor
 	public PublisherConfig() {
@@ -83,7 +89,7 @@ public class PublisherConfig extends ConfigTestElement implements Serializable, 
 		TestBeanHelper.prepare(this);
 		JMeterVariables variables = getThreadContext().getVariables();
 
-		if (variables.getObject(PUBSUB_CONNECTION) != null) {
+		if (variables.getObject(publisherConnection) != null) {
 			LOGGER.error("PubSub connection is already established and active !!");
 		} else {
 			synchronized (this) {
@@ -91,8 +97,9 @@ public class PublisherConfig extends ConfigTestElement implements Serializable, 
 					publisherClient = Publisher.newBuilder(getGcpTopic())
 							.setCredentialsProvider(createCredentialsProviderUsingJson(getCredentials())).build();
 
-					variables.putObject(PUBSUB_CONNECTION, publisherClient);
-					LOGGER.info(String.format("Publisher connection established with the %s successfully !!", getTopic()));
+					variables.putObject(publisherConnection, publisherClient);
+					LOGGER.info(
+							String.format("Publisher connection established with the %s successfully !!", getTopic()));
 				} catch (IOException e) {
 					LOGGER.error("Exception Occured while establishing connection with GCP : ");
 					e.printStackTrace();
@@ -133,8 +140,13 @@ public class PublisherConfig extends ConfigTestElement implements Serializable, 
 		synchronized (this) {
 			if (publisherClient != null) {
 				publisherClient.shutdown();
-				publisherClient = null;
-				LOGGER.info("Publisher connection Terminated successfully !!");
+				try {
+					publisherClient.awaitTermination(30, TimeUnit.SECONDS);
+					LOGGER.info("Publisher connection Terminated successfully !!");
+				} catch (InterruptedException e) {
+					LOGGER.info("Error occurred while terminating Publisher connection");
+					e.printStackTrace();
+				}
 			}
 		}
 	}
@@ -247,8 +259,12 @@ public class PublisherConfig extends ConfigTestElement implements Serializable, 
 		this.client_x509CertUrl = client_x509CertUrl;
 	}
 
-	public static Publisher getPublisherClient() {
-		return (Publisher) JMeterContextService.getContext().getVariables().getObject(PUBSUB_CONNECTION);
+	public String getPublisherConnection() {
+		return publisherConnection;
+	}
+
+	public void setPublisherConnection(String publisherConnection) {
+		this.publisherConnection = publisherConnection;
 	}
 
 }

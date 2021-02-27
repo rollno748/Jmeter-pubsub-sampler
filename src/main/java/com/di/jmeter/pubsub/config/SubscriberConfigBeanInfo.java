@@ -31,6 +31,8 @@ public class SubscriberConfigBeanInfo extends BeanInfoSupport {
 
 	public SubscriberConfigBeanInfo() {
 		super(SubscriberConfig.class);
+		
+		createPropertyGroup("subConfig", new String[] { "subscriberConnection" });
 
 		createPropertyGroup("credentials",
 				new String[] { "type", "projectId", "topic", "subscriptionId", "privateKey", "privateKeyId", "tokenUri",
@@ -107,6 +109,10 @@ public class SubscriberConfigBeanInfo extends BeanInfoSupport {
 		p = property("maxOutstandingRequestBytes");
 		p.setValue(NOT_UNDEFINED, Boolean.TRUE);
 		p.setValue(DEFAULT, "1_000_000_000L");
+		
+		p =  property("subscriberConnection");
+		p.setValue(NOT_UNDEFINED, Boolean.TRUE);
+		p.setValue(DEFAULT, "<SUBSCRIBER CONFIG OBJECT>");
 
 
 		if (LOGGER.isDebugEnabled()) {

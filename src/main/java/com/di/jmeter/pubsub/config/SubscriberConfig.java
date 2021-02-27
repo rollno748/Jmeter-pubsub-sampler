@@ -22,6 +22,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.jmeter.config.ConfigElement;
 import org.apache.jmeter.config.ConfigTestElement;
@@ -43,6 +45,7 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.pubsub.v1.Subscriber;
 import com.google.gson.JsonObject;
 import com.google.pubsub.v1.ProjectSubscriptionName;
+
 
 public class SubscriberConfig extends ConfigTestElement implements ConfigElement, TestStateListener, TestBean, Serializable {
 
@@ -69,10 +72,10 @@ public class SubscriberConfig extends ConfigTestElement implements ConfigElement
 	private String maxAckExtensionPeriod;
 	private String maxOutStandingElementCount;
 	private String maxOutstandingRequestBytes;
-	private static MessagesQueue messagesQueue;
-
-	private static String SUBSCRIBER_CONNECTION = "subscriberConnection";
-	private static String MESSAGESQUEUE = "message";
+	
+	private static Map<String, MessagesQueue> pubsubQueue = new HashMap<String, MessagesQueue>();
+	private String subscriberConnection;
+	//private static String MESSAGESQUEUE = "message";
 	private static String SUBSCRIBED_TOPIC="subTopic";
 
 	@Override
@@ -80,16 +83,17 @@ public class SubscriberConfig extends ConfigTestElement implements ConfigElement
 		this.setRunningVersion(true);
 		TestBeanHelper.prepare(this);
 
-		messagesQueue = new MessagesQueue(100000);
+		
 		JMeterVariables variables = getThreadContext().getVariables();
 		ProjectSubscriptionName subscriptionName = ProjectSubscriptionName.of(getProjectId(), getSubscriptionId());
 
-		if (variables.getObject(SUBSCRIBER_CONNECTION) != null) {
+		if (variables.getObject(subscriberConnection) != null) {
 			LOGGER.error("PubSub connection is already established and active !!");
 		} else {
 			synchronized (this) {
 				try {
-
+					MessagesQueue messagesQueue = new MessagesQueue(100000);
+					
 					LOGGER.info("Attempting to subscribe to a topic");
 					if (isFlowControlSetting()) {
 						subscriber = Subscriber.newBuilder(subscriptionName, new SimpleMessageReceiver(messagesQueue))
@@ -109,8 +113,9 @@ public class SubscriberConfig extends ConfigTestElement implements ConfigElement
 					subscriber.startAsync().awaitRunning();
 					// subscriber.awaitTerminated(); 
 					// Allow the subscriber to run indefinitely unless an error occurs
-					variables.putObject(SUBSCRIBER_CONNECTION, subscriber);
-					variables.putObject(MESSAGESQUEUE, messagesQueue);
+					pubsubQueue.put(getSubscriberConnection(), messagesQueue);
+					//variables.putObject(subscriberConnection, subscriber);
+					//variables.putObject(MESSAGESQUEUE, pubsubQueue);
 					variables.putObject(SUBSCRIBED_TOPIC, topic);
 					LOGGER.info(String.format("Subscriber connection established with the %s successfully !!", getTopic()));
 
@@ -341,16 +346,29 @@ public class SubscriberConfig extends ConfigTestElement implements ConfigElement
 		}
 	}
 
-	public static Subscriber getSubscriber() {
-		return (Subscriber) JMeterContextService.getContext().getVariables().getObject(SUBSCRIBER_CONNECTION);
-	}
-
-	public static MessagesQueue getMessagesQueue() {
-		return (MessagesQueue) JMeterContextService.getContext().getVariables().getObject(MESSAGESQUEUE);
-	}
+//	public static MessagesQueue getMessagesQueue() {
+//		return (MessagesQueue) JMeterContextService.getContext().getVariables().getObject(MESSAGESQUEUE);
+//	}
 	
 	public static String getSubscribedTopic() {
 		return (String) JMeterContextService.getContext().getVariables().getObject(SUBSCRIBED_TOPIC);
 	}
 
+	public String getSubscriberConnection() {
+		return subscriberConnection;
+	}
+
+	public void setSubscriberConnection(String subscriberConnection) {
+		this.subscriberConnection = subscriberConnection;
+	}
+
+	public static Map<String, MessagesQueue> getPubsubQueue() {
+		return pubsubQueue;
+	}
+
+	public static void setPubsubQueue(Map<String, MessagesQueue> pubsubQueue) {
+		SubscriberConfig.pubsubQueue = pubsubQueue;
+	}
+	
+	
 }

@@ -1,12 +1,15 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.di.jmeter.sampler</groupId>
 	<artifactId>jmeter-pubsub-sampler</artifactId>
-	<version>1.1-SNAPSHOT</version>
+	<version>1.1</version>
 	<properties>
 		<di-jmeter-version>5.1.1</di-jmeter-version>
 		<jmeter.lib.scope>provided</jmeter.lib.scope>
-		<google.cloud.pubsub.version>1.86.0</google.cloud.pubsub.version>
+		<google.cloud.pubsub.version>1.111.2</google.cloud.pubsub.version>
+		<google.gson.version>2.8.6</google.gson.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -25,6 +28,11 @@
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
 			<version>28.1-android</version>
+		</dependency>
+		<dependency>
+			<groupId>com.google.code.gson</groupId>
+			<artifactId>gson</artifactId>
+			<version>${google.gson.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.google.cloud</groupId>
@@ -94,11 +102,14 @@
 							<include>io.opencensus:*</include>
 							<include>com.google.protobuf:*</include>
 							<include>com.google.guava:*</include>
+							<include>com.google.gson:*</include>
 							<include>org.checkerframework:checker-compat-qual</include>
 							<include>com.google.errorprone:error_prone_annotations</include>
 							<include>com.google.j2objc:j2objc-annotations</include>
 							<include>org.codehaus.mojo:animal-sniffer-annotations</include>
 							<include>io.grpc:*</include>
+							<include>io.grpc.grpclb:*</include>
+							<include>io.perfmark:*</include>
 							<include>org.threeten:threetenbp</include>
 							<include>com.google.http-client:*</include>
 							<include>com.google.android:annotations</include>
@@ -116,6 +127,12 @@
 						<goals>
 							<goal>shade</goal>
 						</goals>
+						<configuration>
+							<transformers>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
+							</transformers>
+						</configuration>
 					</execution>
 				</executions>
 			</plugin>

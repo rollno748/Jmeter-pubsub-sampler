@@ -18,15 +18,17 @@
 
 package com.di.jmeter.pubsub.sampler;
 
-import com.google.api.core.ApiFuture;
-import com.google.cloud.pubsub.v1.Publisher;
-import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
-import com.google.gson.reflect.TypeToken;
-import com.google.protobuf.ByteString;
-import com.google.pubsub.v1.PubsubMessage;
-
-import com.di.jmeter.pubsub.config.PublisherConfig;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.zip.GZIPOutputStream;
 
 import org.apache.jmeter.config.ConfigTestElement;
 import org.apache.jmeter.engine.util.ConfigMergabilityIndicator;
@@ -35,28 +37,22 @@ import org.apache.jmeter.samplers.SampleResult;
 import org.apache.jmeter.samplers.Sampler;
 import org.apache.jmeter.testbeans.TestBean;
 import org.apache.jmeter.testelement.TestElement;
+import org.apache.jmeter.threads.JMeterContextService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.lang.reflect.Type;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.ExecutionException;
-import java.util.zip.GZIPOutputStream;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.api.core.ApiFuture;
+import com.google.cloud.pubsub.v1.Publisher;
+import com.google.protobuf.ByteString;
+import com.google.pubsub.v1.PubsubMessage;
 
 public class PublisherSampler extends PublisherTestElement implements Sampler, TestBean, ConfigMergabilityIndicator {
 
 	private static final long serialVersionUID = -2509242423429019193L;
 	private static final Logger LOGGER = LoggerFactory.getLogger(PublisherSampler.class);
-	private static final Gson gson = new Gson();
-	private static final Type TYPED_MAP = new TypeToken<Map<String, String>>() {}.getType();
 
 	private Publisher publisher = null;
 	private static final Set<String> APPLIABLE_CONFIG_CLASSES = new HashSet<>(
@@ -65,25 +61,37 @@ public class PublisherSampler extends PublisherTestElement implements Sampler, T
 	@Override
 	public SampleResult sample(Entry e) {
 		PubsubMessage template = null;
+		Map<String, String> attributes = null;
+		byte[] byteMsg;
 		SampleResult result = new SampleResult();
 		result.setSampleLabel(getName());
 		result.setSamplerData(request());
 		result.setDataType(SampleResult.TEXT);
 		result.setContentType("text/plain");
 		result.setDataEncoding(StandardCharsets.UTF_8.name());
-
-		Map<String, String> attributes = convertStringToAttributesMap(getAttributes());
+		
+		try {
+			attributes = convertStringToAttributesMap(getAttributes());
+		} catch (JsonParseException e1) {
+			e1.printStackTrace();
+		} catch (JsonMappingException e1) {
+			e1.printStackTrace();
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
 
 		if (isGzipCompression()) {
-			template = createPubsubMessage(createEventCompressed(getMessage()), attributes);
+			byteMsg = createEventCompressed(getMessage());
 		} else {
-			template = convertStringToPubSubMessage(getMessage(), attributes);
+			byteMsg = ByteString.copyFromUtf8(getMessage()).toByteArray();
 		}
 
 		result.sampleStart();
 
 		try {
+			template = createPubsubMessage(byteMsg, attributes);
 			publish(template, result);
+
 		} catch (Exception ex) {
 			LOGGER.info("Exception occurred while publishing message");
 			result = handleException(result, ex);
@@ -93,29 +101,20 @@ public class PublisherSampler extends PublisherTestElement implements Sampler, T
 		return result;
 	}
 
-	private Map<String,String> convertStringToAttributesMap(String attributesAsString){
-			return Optional.ofNullable(attributesAsString)
+	@SuppressWarnings("unchecked")
+	private Map<String, String> convertStringToAttributesMap(String attributes) throws JsonParseException, JsonMappingException, IOException {
+		
+		if(!attributes.equals("")) {
+			return (HashMap<String, String>) new ObjectMapper().readValue(attributes, Map.class);
+			
+		}
 
-					.map(str -> {
-						Map<String, String> result = null;
-						try {
-							result = gson.fromJson(str, TYPED_MAP);
-						} catch (JsonSyntaxException sse) {
-							LOGGER.error("Failed to convert string attributes: {} to Map<String,String>", attributesAsString, sse);
-						}
-						return result;
-					})
-
-					.orElse(Collections.emptyMap());
+		return Collections.emptyMap();
 	}
 
 	// Returns Modified templates/Message as template for publishing
-	private PubsubMessage convertStringToPubSubMessage(String message, Map<String, String> attributes) {
-		return PubsubMessage.newBuilder().setData(ByteString.copyFromUtf8(message)).putAllAttributes(attributes).build();
-	}
-
 	private byte[] createEventCompressed(String message) {
-		//BufferedWriter zipWriter = null;
+		// BufferedWriter zipWriter = null;
 		try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream(message.length())) {
 			try (GZIPOutputStream gzipOutputStream = new GZIPOutputStream(byteArrayOutputStream)) {
 				gzipOutputStream.write(message.getBytes(StandardCharsets.UTF_8));
@@ -131,28 +130,31 @@ public class PublisherSampler extends PublisherTestElement implements Sampler, T
 		String resp = null;
 		ApiFuture<String> future = null;
 		if (this.publisher == null) {
-			this.publisher = PublisherConfig.getPublisherClient();
+			this.publisher = (Publisher) JMeterContextService.getContext().getVariables()
+					.getObject(getPublisherClientObject());
 		}
 
 		try {
+
 			future = publisher.publish(template);
-			result.setResponseHeaders("MessagePublishedID: "+ future.get());
+			result.setResponseHeaders("MessagePublishedID: " + future.get());
 			result.setResponseData(template.toString(), StandardCharsets.UTF_8.name());
 			result.setSuccessful(true);
 			result.setResponseCode("200");
 			result.setResponseMessageOK();
-			
+
 		} catch (ExecutionException e) {
 			LOGGER.info("Publisher config not initialized properly.. Check the config element");
 			handleException(result, e);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-		
+
 		return resp;
 	}
 
-	public static PubsubMessage createPubsubMessage(byte[] msg, Map<String,String> attributes) {
+	public static PubsubMessage createPubsubMessage(byte[] msg, Map<String, String> attributes) {
+
 		return PubsubMessage.newBuilder().setData(ByteString.copyFrom(msg)).putAllAttributes(attributes).build();
 	}
 
@@ -165,7 +167,8 @@ public class PublisherSampler extends PublisherTestElement implements Sampler, T
 	private SampleResult handleException(SampleResult result, Exception ex) {
 		result.setResponseMessage("Message Publish Error");
 		result.setResponseCode("500");
-		result.setResponseData(String.format("Error in publishing message to PubSub topic : %s", ex.toString()).getBytes());// PublisherConfig.getTopic()
+		result.setResponseData(
+				String.format("Error in publishing message to PubSub topic : %s", ex.toString()).getBytes());
 		result.setSuccessful(false);
 		return result;
 	}
