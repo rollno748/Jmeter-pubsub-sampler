@@ -68,6 +68,10 @@ Below are the references which guided to build this plugin.
 * https://cloud.google.com/pubsub/docs/publisher
 * https://cloud.google.com/pubsub/docs/pull
 
-Please rate a :star2: if you like it. 
-Please open up :bug: - If you experienced something.
+## 💲 Donate
+<a href="https://www.buymeacoffee.com/rollno748" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-green.png" alt="Buy Me A Coffee" style="max-width:20%;" ></a> 
+
+Please rate a :star2: if you like it.
+
+Please open up an issue (:bug:) - If you experienced something.
  
