@@ -73,5 +73,5 @@ Below are the references which guided to build this plugin.
 
 Please rate a :star2: if you like it.
 
-Please open up an issue (:bug:) - If you experienced something.
+Please open up an issue (:beetle:) - If you experienced something.
  
