@@ -4,13 +4,15 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.di.jmeter.sampler</groupId>
 	<artifactId>jmeter-pubsub-sampler</artifactId>
-	<version>1.1</version>
+	<version>2.0</version>
+
 	<properties>
 		<di-jmeter-version>5.1.1</di-jmeter-version>
 		<jmeter.lib.scope>provided</jmeter.lib.scope>
 		<google.cloud.pubsub.version>1.111.2</google.cloud.pubsub.version>
 		<google.gson.version>2.8.9</google.gson.version>
 	</properties>
+
 	<dependencies>
 		<dependency>
 			<groupId>org.apache.jmeter</groupId>
@@ -46,6 +48,7 @@
 			</exclusions>
 		</dependency>
 	</dependencies>
+
 	<build>
 		<plugins>
 			<plugin>
