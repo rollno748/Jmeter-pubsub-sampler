@@ -24,6 +24,7 @@ import java.io.InputStream;
 import java.io.Serializable;
 import java.util.concurrent.TimeUnit;
 
+import com.google.api.gax.batching.BatchingSettings;
 import org.apache.jmeter.config.ConfigElement;
 import org.apache.jmeter.config.ConfigTestElement;
 import org.apache.jmeter.testbeans.TestBean;
@@ -39,6 +40,7 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.pubsub.v1.Publisher;
 import com.google.gson.JsonObject;
 import com.google.pubsub.v1.ProjectTopicName;
+import org.threeten.bp.Duration;
 
 /**
  * @author Mohamed Ibrahim
@@ -67,6 +69,10 @@ public class PublisherConfig extends ConfigTestElement
 	private String client_x509CertUrl;
 
 	private String publisherConnection;
+	private String batchingEnabled;
+	private String batchingElementCountThreshold;
+	private String batchingRequestByteThreshold;
+	private String batchingDelayThreshold;
 
 	// Default Constructor
 	public PublisherConfig() {
@@ -94,12 +100,25 @@ public class PublisherConfig extends ConfigTestElement
 		} else {
 			synchronized (this) {
 				try {
+					Boolean isBatchingEnabled = Boolean.parseBoolean(getBatchingEnabled());
+					BatchingSettings.Builder batchingSettingsBuilder = BatchingSettings.newBuilder()
+							.setIsEnabled(isBatchingEnabled);
+					if (Boolean.TRUE.equals(isBatchingEnabled)) {
+						batchingSettingsBuilder.setElementCountThreshold(Long.parseLong(getBatchingElementCountThreshold()))
+								.setRequestByteThreshold(Long.parseLong(getBatchingRequestByteThreshold()))
+								.setDelayThreshold(Duration.ofMillis(Long.parseLong(getBatchingDelayThreshold())));
+					}
+
 					publisherClient = Publisher.newBuilder(getGcpTopic())
+							.setBatchingSettings(batchingSettingsBuilder.build())
 							.setCredentialsProvider(createCredentialsProviderUsingJson(getCredentials())).build();
 
 					variables.putObject(publisherConnection, publisherClient);
 					LOGGER.info(
 							String.format("Publisher connection established with the %s successfully !!", getTopic()));
+				} catch (NumberFormatException e) {
+					LOGGER.error("Exception occurred while parsing publisher properties, check batching and other values specified : ", e);
+					e.printStackTrace();
 				} catch (IOException e) {
 					LOGGER.error("Exception Occured while establishing connection with GCP : ");
 					e.printStackTrace();
@@ -215,6 +234,22 @@ public class PublisherConfig extends ConfigTestElement
 		return client_x509CertUrl;
 	}
 
+	public String getBatchingEnabled() {
+		return batchingEnabled;
+	}
+
+	public String getBatchingElementCountThreshold() {
+		return batchingElementCountThreshold;
+	}
+
+	public String getBatchingRequestByteThreshold() {
+		return batchingRequestByteThreshold;
+	}
+
+	public String getBatchingDelayThreshold() {
+		return batchingDelayThreshold;
+	}
+
 	public void setType(String type) {
 		this.type = type;
 	}
@@ -265,6 +300,22 @@ public class PublisherConfig extends ConfigTestElement
 
 	public void setPublisherConnection(String publisherConnection) {
 		this.publisherConnection = publisherConnection;
+	}
+
+	public void setBatchingEnabled(String batchingEnabled) {
+		this.batchingEnabled = batchingEnabled;
+	}
+
+	public void setBatchingElementCountThreshold(String batchingElementCountThreshold) {
+		this.batchingElementCountThreshold = batchingElementCountThreshold;
+	}
+
+	public void setBatchingRequestByteThreshold(String batchingRequestByteThreshold) {
+		this.batchingRequestByteThreshold = batchingRequestByteThreshold;
+	}
+
+	public void setBatchingDelayThreshold(String batchingDelayThreshold) {
+		this.batchingDelayThreshold = batchingDelayThreshold;
 	}
 
 }
