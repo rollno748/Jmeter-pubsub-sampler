@@ -32,10 +32,11 @@ public class PublisherConfigBeanInfo extends BeanInfoSupport {
 
 	public PublisherConfigBeanInfo() {
 		super(PublisherConfig.class);
-		
-		createPropertyGroup("pubConfig", new String[] { "publisherConnection" });
-		
-		createPropertyGroup("credentials", new String[] { "type", "projectId", "topic", "privateKey", "privateKeyId", "tokenUri",  
+
+		createPropertyGroup("pubConfig", new String[] { "publisherConnection", "batchingEnabled",
+                "batchingElementCountThreshold", "batchingRequestByteThreshold", "batchingDelayThreshold" });
+
+		createPropertyGroup("credentials", new String[] { "type", "projectId", "topic", "privateKey", "privateKeyId", "tokenUri",
 				"clientId", "clientEmail", "client_x509CertUrl", "authUri", "authProvider_x509CertUrl" });
 
 		PropertyDescriptor propertyDescriptor =  property("type");
@@ -81,11 +82,27 @@ public class PublisherConfigBeanInfo extends BeanInfoSupport {
 		propertyDescriptor =  property("authProvider_x509CertUrl");
 		propertyDescriptor.setValue(NOT_UNDEFINED, Boolean.TRUE);
 		propertyDescriptor.setValue(DEFAULT, "https://www.googleapis.com/oauth2/v1/certs");
-		
+
 		propertyDescriptor =  property("publisherConnection");
 		propertyDescriptor.setValue(NOT_UNDEFINED, Boolean.TRUE);
 		propertyDescriptor.setValue(DEFAULT, "<PUBLISHER CONFIG OBJECT>");
-		
+
+        propertyDescriptor =  property("batchingEnabled");
+        propertyDescriptor.setValue(NOT_UNDEFINED, Boolean.TRUE);
+        propertyDescriptor.setValue(DEFAULT, "true");
+
+        propertyDescriptor =  property("batchingElementCountThreshold");
+        propertyDescriptor.setValue(NOT_UNDEFINED, Boolean.TRUE);
+        propertyDescriptor.setValue(DEFAULT, "100");
+
+        propertyDescriptor =  property("batchingRequestByteThreshold");
+        propertyDescriptor.setValue(NOT_UNDEFINED, Boolean.TRUE);
+        propertyDescriptor.setValue(DEFAULT, "1000");
+
+        propertyDescriptor =  property("batchingDelayThreshold");
+        propertyDescriptor.setValue(NOT_UNDEFINED, Boolean.TRUE);
+        propertyDescriptor.setValue(DEFAULT, "1");
+
 
 		if (LOGGER.isDebugEnabled()) {
 			String pubDescriptorsAsString = Arrays.stream(getPropertyDescriptors())
